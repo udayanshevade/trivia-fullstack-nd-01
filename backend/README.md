@@ -115,10 +115,11 @@ DELETE ...
 - General
   - Fetches a paginated list of questions, answers, their difficulty levels and categories.
   - Request Arguments:
-    - page: which identifies the start and end of the list of questions to return
-    - current_category: which specifies how to filter down the questions by category
+    - 'page': which identifies the start and end of the list of questions to return
+    - 'current_category': (optional) which specifies how to filter down the questions by category
+    - 'search': (optional) which specifies a search term to match, case-insensitive
   - Returns: An object with a key, questions, containing questions, along with a count of all questions, a list of categories and the current category.
-- Sample: 'http://localhost:5000/questions?page=1&current_category=1'
+- Sample: 'http://localhost:5000/questions?page=1&current_category=1&search=biography'
 
 ```
 {
@@ -132,11 +133,14 @@ DELETE ...
     }
   ],
   total_questions: 19,
-  categories: [
-    {
-      '1': "Science",
-    }
-  ],
+  categories: {
+    '1': "Science",
+    '2': 'Art',
+    '3': 'Geography,
+    '4': 'History',
+    '5' : "Entertainment",
+    '6' : "Sports"
+  },
   current_category: 1,
 }
 ```

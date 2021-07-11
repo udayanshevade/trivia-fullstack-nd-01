@@ -31,6 +31,10 @@ def create_app(test_config=None):
     def healthcheck():
         return 'OK', 200
 
+    #  ------------------------------------------------------------------------
+    #  Categories
+    #  ------------------------------------------------------------------------
+
     @app.route('/categories', methods=['GET'])
     def get_categories():
         """Handles GET requests for all available categories."""
@@ -62,9 +66,21 @@ def create_app(test_config=None):
 
     QUESTIONS_PER_PAGE = 10
 
+    #  ------------------------------------------------------------------------
+    #  Questions
+    #  ------------------------------------------------------------------------
+
+    # Get paginated questions
+
     @app.route('/questions', methods=['GET'])
     def get_paginated_questions():
-        """Handles getting paginated responses with optional query and pagination params"""
+        """
+          Handles getting paginated responses with optional query and pagination params
+          Request params:
+            - page: default of 1, filter by which batch of questions
+            - current_category: (optional) filter questions down by a specified category
+            - search: (optional) filter down by a term to match in the question
+        """
         try:
             print('Request - [GET] /questions')
 
@@ -75,7 +91,7 @@ def create_app(test_config=None):
 
             questions_total_count = db.session.query(
                 func.count(Question.id)).first()[0]
-            # first eliminate an out-of-range query
+            # FIRST eliminate an out-of-range query
             if offset >= questions_total_count:
                 abort(404)
 
@@ -83,14 +99,22 @@ def create_app(test_config=None):
             current_category = request.args.get(
                 'current_category', None, type=int)
 
+            # if the category does not exist, fail early
             if current_category and not Category.query.get(current_category):
                 abort(404)
+
+            search = request.args.get('search', '', type=str)
 
             questions_query = Question.query
             # apply an optional category filter before pagination
             if current_category:
                 questions_query = questions_query.filter(
                     Question.category == current_category)
+            if search:
+                questions_query = questions_query.filter(
+                    Question.question.ilike(
+                        f'%{search}%')
+                )
             questions_query = questions_query.limit(
                 QUESTIONS_PER_PAGE).offset(offset)
             questions_data = [format_question(
@@ -112,6 +136,8 @@ def create_app(test_config=None):
             abort(code)
         finally:
             db.session.close()
+
+    # Delete post
 
     @app.route('/questions/<int:question_id>', methods=['DELETE'])
     def delete_question(question_id):
@@ -138,19 +164,18 @@ def create_app(test_config=None):
         finally:
             db.session.close()
 
-    '''
-      @TODO: 
-      Create an endpoint to POST a new question,
-      which will require the question and answer text,
-      category, and difficulty score.
+    # Create post
 
-      TEST: When you submit a question on the "Add" tab,
-      the form will clear and the question will appear at the end of the last page
-      of the questions list in the "List" tab.
-    '''
     @app.route('/questions', methods=['POST'])
     def add_question():
-        """Handles addition of a new question"""
+        """
+          Handles addition of a new question
+          Request body:
+            - question: text of the question to add
+            - answer: text of the answer
+            - difficulty: integer indicating how hard the question is
+            - category: integer identifying the category of the question
+        """
         try:
             print('Request - [POST] - /questions')
             body = request.get_json()
@@ -183,17 +208,6 @@ def create_app(test_config=None):
             abort(code)
         finally:
             db.session.close()
-
-    '''
-      @TODO: 
-      Create a POST endpoint to get questions based on a search term.
-      It should return any questions for whom the search term
-      is a substring of the question.
-
-      TEST: Search by any phrase. The questions list will update to include
-      only question that include that string within their question.
-      Try using the word "title" to start.
-    '''
 
     '''
       @TODO: 

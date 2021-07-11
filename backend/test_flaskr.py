@@ -55,7 +55,7 @@ class TriviaTestCase(unittest.TestCase):
     # Get paginated questions
 
     def test_get_paginated_questions(self):
-        """Tests getting paginated questions with request param"""
+        """Tests getting paginated questions"""
         res = self.client().get('/questions')
         data = json.loads(res.data)
         self.assertEqual(res.status_code, 200)
@@ -77,6 +77,33 @@ class TriviaTestCase(unittest.TestCase):
 
         # None, but the key should still exist
         self.assertIn('current_category', data)
+
+    # def test_get_paginated_questions_for_category(self):
+        # """Tests getting paginated questions with 'current_category' param"""
+
+    def test_get_paginated_questions_for_search(self):
+        """Tests getting paginated questions with 'search' param"""
+        # enter new data that is unique
+        new_question = Question(
+            question='How much wood could a woodchuck chuck if a woodchuck could chuck wood?',
+            answer='A woodchuck would chuck as much wood as a woodchuck could if a woodchuck could chuck wood.',
+            category=1,
+            difficulty=2
+        )
+        db.session.add(new_question)
+        db.session.commit()
+        res = self.client().get('/questions?search=WoOdcHuCk')  # case-insensitive
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data['success'], True)
+        self.assertNotIn('error', data)
+
+        # populated array
+        questions = data['questions']
+        self.assertTrue(type(questions) == list and len(questions) == 1)
+
+        Question.query.get(new_question.id).delete()  # test-specific tear down
 
     def test_get_paginated_questions_with_404_for_out_of_range_page(self):
         """Returns 404 error for an out-of-range page"""
