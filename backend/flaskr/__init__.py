@@ -43,7 +43,7 @@ def create_app(test_config=None):
             return jsonify({
                 'success': True,
                 'categories': categories
-            })
+            }), 200
         except Exception as e:
             print(f'Error - [GET] /categories - {e}')
             abort(500)
@@ -104,7 +104,7 @@ def create_app(test_config=None):
                 'total_questions': questions_total_count,
                 'categories': categories_data,
                 'current_category': current_category,
-            })
+            }), 200
         except Exception as e:
             print(f'Error - [GET] /questions - {e}')
             code = getattr(e, 'code', 500)
@@ -112,13 +112,29 @@ def create_app(test_config=None):
         finally:
             db.session.close()
 
-    '''
-      @TODO: 
-      Create an endpoint to DELETE question using a question ID.
+    @app.route('/questions/<int:question_id>', methods=['DELETE'])
+    def delete_question(question_id):
+        """Handle deletion of a question"""
+        try:
+            print(f'Request - [DELETE] /questions/{question_id}')
 
-      TEST: When you click the trash icon next to a question, the question will be removed.
-      This removal will persist in the database and when you refresh the page.
-    '''
+            question = Question.query.get(question_id)
+
+            # should not delete a non-existing item
+            if not question:
+                abort(404)
+
+            question.delete()
+
+            return jsonify({
+                'success': True,
+            }), 200
+        except Exception as e:
+            print(f'Error - [DELETE] /questions/{question_id} - {e}')
+            code = getattr(e, 'code', 500)
+            abort(code)
+        finally:
+            db.session.close()
 
     '''
       @TODO: 

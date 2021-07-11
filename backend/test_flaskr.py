@@ -4,7 +4,7 @@ import json
 from flask_sqlalchemy import SQLAlchemy
 
 from flaskr import create_app
-from models import setup_db, Question, Category
+from models import db, setup_db, Question, Category
 
 
 class TriviaTestCase(unittest.TestCase):
@@ -28,6 +28,7 @@ class TriviaTestCase(unittest.TestCase):
 
     def tearDown(self):
         """Executed after reach test"""
+        db.session.close()
         pass
 
     def test_get_categories(self):
@@ -84,6 +85,34 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(data['success'], False)
         self.assertEqual(data['error'], 404)
         self.assertEqual(data['message'], 'not found')
+
+    def test_delete_question(self):
+        """Tests deletion of a question"""
+        # First insert a new question for the test and delete it
+        new_question = Question(
+            question='How do magnets work?',
+            answer='Magic.',
+            category=1,
+            difficulty=1000,
+        )
+        db.session.add(new_question)
+        db.session.commit()
+
+        res = self.client().delete(f'/questions/{new_question.id}')
+        data = json.loads(res.data)
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data['success'], True)
+
+        # We should not be able to find the item in the db now
+        deleted_question = Question.query.get(new_question.id)
+        self.assertEqual(deleted_question, None)
+
+    def test_delete_question_with_404_for_out_of_range_item(self):
+        """Tests failed deletion of a non-existing question"""
+        res = self.client().delete('/questions/1000')
+        data = json.loads(res.data)
+        self.assertEqual(res.status_code, 404)
+        self.assertEqual(data['success'], False)
 
 
 # Make the tests conveniently executable
