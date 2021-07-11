@@ -109,3 +109,33 @@ DELETE ...
   }
 }
 ```
+
+#### Get '/questions'
+
+- General
+  - Fetches a paginated list of questions, answers, their difficulty levels and categories.
+  - Request Arguments:
+    - page: which identifies the start and end of the list of questions to return
+    - current_category: which specifies how to filter down the questions by category
+  - Returns: An object with a key, questions, containing questions, along with a count of all questions, a list of categories and the current category.
+
+```
+{
+  questions: [
+    {
+      'id' : 5,
+      'question' : "Whose biography is entitled 'I Know Why the Caged Bird Sings'?",
+      'answer': "Maya Angelou",
+      'difficulty' : 2,
+      'category': 4,
+    }
+  ],
+  total_questions: 19,
+  categories: [
+    {
+      '1': "Science",
+    }
+  ],
+  current_category: 1,
+}
+```

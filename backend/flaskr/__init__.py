@@ -1,6 +1,7 @@
 import os
 from flask import Flask, request, abort, jsonify
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import func
 from flask_cors import CORS
 import random
 
@@ -36,11 +37,8 @@ def create_app(test_config=None):
         try:
             print('Request - [GET] /categories')
 
-            categories = {}
             data = Category.query.all()
-
-            for category in data:
-                categories[category.id] = category.type
+            categories = {category.id: category.type for category in data}
 
             return jsonify({
                 'success': True,
@@ -48,22 +46,71 @@ def create_app(test_config=None):
             })
         except Exception as e:
             print(f'Error - [GET] /categories - {e}')
-            abort(e)
+            abort(500)
         finally:
             db.session.close()
 
-    '''
-      @TODO:
-      Create an endpoint to handle GET requests for questions,
-      including pagination (every 10 questions).
-      This endpoint should return a list of questions,
-      number of total questions, current category, categories.
+    def format_question(question):
+        """Picks the pertinent fields from the raw Question query object"""
+        return {
+            'id': question.id,
+            'question': question.question,
+            'answer': question.answer,
+            'difficulty': question.difficulty,
+            'category': question.category,
+        }
 
-      TEST: At this point, when you start the application
-      you should see questions and categories generated,
-      ten questions per page and pagination at the bottom of the screen for three pages.
-      Clicking on the page numbers should update the questions.
-    '''
+    QUESTIONS_PER_PAGE = 10
+
+    @app.route('/questions', methods=['GET'])
+    def get_paginated_questions():
+        try:
+            print('Request - [GET] /questions')
+
+            page = request.args.get('page', 1, type=int)
+
+            # calculate offset, if page is specified, defaults to 0
+            offset = (page - 1) * QUESTIONS_PER_PAGE
+
+            questions_total_count = db.session.query(
+                func.count(Question.id)).first()[0]
+            # first eliminate an out-of-range query
+            if offset >= questions_total_count:
+                abort(404)
+
+            # default current category to None, returned in response as is
+            current_category = request.args.get(
+                'current_category', None, type=int)
+
+            if current_category and not Category.query.get(current_category):
+                abort(404)
+
+            questions_query = Question.query
+            # apply an optional category filter before pagination
+            if current_category:
+                questions_query = questions_query.filter(
+                    Question.category == current_category)
+            questions_query = questions_query.limit(
+                QUESTIONS_PER_PAGE).offset(offset)
+            questions_data = [format_question(
+                question) for question in questions_query.all()]
+
+            categories_data = {
+                category.id: category.type for category in Category.query.all()}
+
+            return jsonify({
+                'success': True,
+                'questions': questions_data,
+                'total_questions': questions_total_count,
+                'categories': categories_data,
+                'current_category': current_category,
+            })
+        except Exception as e:
+            print(f'Error - [GET] /questions - {e}')
+            code = getattr(e, 'code', 500)
+            abort(code)
+        finally:
+            db.session.close()
 
     '''
       @TODO: 
@@ -163,5 +210,14 @@ def create_app(test_config=None):
             'error': 422,
             'message': 'could not process the request'
         }), 4222
+
+    @app.errorhandler(500)
+    def internal_server_error(error):
+        """Handles an unpredicted internal server error"""
+        return jsonify({
+            'success': False,
+            'error': 500,
+            'message': 'internal server error'
+        })
 
     return app
