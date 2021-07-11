@@ -4,7 +4,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 import random
 
-from models import setup_db, Question, Category
+from models import db, setup_db, Question, Category
 
 QUESTIONS_PER_PAGE = 10
 
@@ -17,7 +17,7 @@ def create_app(test_config=None):
 
     @app.after_request
     def after_request(response):
-        '''Processes the response before sending'''
+        """Processes the response before sending"""
         response.headers.add('Access-Control-Allow-Origin', '*')
         response.headers.add('Access-Control-Allow-Headers',
                              'Content-Type,Authorization,true')
@@ -29,6 +29,28 @@ def create_app(test_config=None):
     @app.route('/healthcheck', methods=['GET'])
     def healthcheck():
         return 'OK', 200
+
+    @app.route('/categories', methods=['GET'])
+    def get_categories():
+        """Create an endpoint to handle GET requests for all available categories."""
+        try:
+            print('Request - [GET] /categories')
+
+            categories = {}
+            data = Category.query.all()
+
+            for category in data:
+                categories[category.id] = category.type
+
+            return jsonify({
+                'success': True,
+                'categories': categories
+            })
+        except Exception as e:
+            print(f'Error - [GET] /categories - {e}')
+            abort(e)
+        finally:
+            db.session.close()
 
     '''
       @TODO:
@@ -99,7 +121,7 @@ def create_app(test_config=None):
 
     @app.errorhandler(400)
     def invalid_request(error):
-        '''Error handler for invalid request'''
+        """Error handler for invalid request"""
         return jsonify({
             'success': False,
             'error': 400,
@@ -108,7 +130,7 @@ def create_app(test_config=None):
 
     @app.errorhandler(404)
     def not_found(error):
-        '''Error handler for resource not found'''
+        """Error handler for a resource that can't be found"""
         return jsonify({
             'success': False,
             'error': 404,
@@ -117,6 +139,7 @@ def create_app(test_config=None):
 
     @app.errorhandler(405)
     def method_not_allowed(error):
+        """Error handler for an unallowed request method"""
         return jsonify({
             'success': False,
             'error': 405,
@@ -125,6 +148,7 @@ def create_app(test_config=None):
 
     @app.errorhandler(408)
     def request_timeout(error):
+        """Error handler for a request timeout"""
         return jsonify({
             'success': False,
             'error': 408,
@@ -133,6 +157,7 @@ def create_app(test_config=None):
 
     @app.errorhandler(422)
     def unprocessable_entity(error):
+        """Error handler for an invalid request with valid syntax"""
         return jsonify({
             'success': False,
             'error': 422,
