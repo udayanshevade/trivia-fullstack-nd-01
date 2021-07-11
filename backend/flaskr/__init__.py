@@ -19,10 +19,16 @@ def create_app(test_config=None):
     def after_request(response):
         '''Processes the response before sending'''
         response.headers.add('Access-Control-Allow-Origin', '*')
-        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Headers',
+                             'Content-Type,Authorization,true')
         response.headers.add(
             'Access-Control-Allow-Methods', ['GET', 'POST', 'DELETE', 'OPTIONS'])
+
         return response
+
+    @app.route('/healthcheck', methods=['GET'])
+    def healthcheck():
+        return 'OK', 200
 
     '''
       @TODO:
@@ -87,5 +93,50 @@ def create_app(test_config=None):
       one question at a time is displayed, the user is allowed to answer
       and shown whether they were correct or not.
     '''
+
+    #  Error handlers
+    #  ------------------------------------------------------------------------
+
+    @app.errorhandler(400)
+    def invalid_request(error):
+        '''Error handler for invalid request'''
+        return jsonify({
+            'success': False,
+            'error': 400,
+            'message': 'invalid request'
+        }), 400
+
+    @app.errorhandler(404)
+    def not_found(error):
+        '''Error handler for resource not found'''
+        return jsonify({
+            'success': False,
+            'error': 404,
+            'message': 'not found'
+        }), 404
+
+    @app.errorhandler(405)
+    def method_not_allowed(error):
+        return jsonify({
+            'success': False,
+            'error': 405,
+            'message': 'method not allowed'
+        }), 405
+
+    @app.errorhandler(408)
+    def request_timeout(error):
+        return jsonify({
+            'success': False,
+            'error': 408,
+            'message': 'request timed out'
+        }), 408
+
+    @app.errorhandler(422)
+    def unprocessable_entity(error):
+        return jsonify({
+            'success': False,
+            'error': 422,
+            'message': 'could not process the request'
+        }), 4222
 
     return app
