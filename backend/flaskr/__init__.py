@@ -33,7 +33,7 @@ def create_app(test_config=None):
 
     @app.route('/categories', methods=['GET'])
     def get_categories():
-        """Create an endpoint to handle GET requests for all available categories."""
+        """Handles GET requests for all available categories."""
         try:
             print('Request - [GET] /categories')
 
@@ -64,6 +64,7 @@ def create_app(test_config=None):
 
     @app.route('/questions', methods=['GET'])
     def get_paginated_questions():
+        """Handles getting paginated responses with optional query and pagination params"""
         try:
             print('Request - [GET] /questions')
 
@@ -114,7 +115,7 @@ def create_app(test_config=None):
 
     @app.route('/questions/<int:question_id>', methods=['DELETE'])
     def delete_question(question_id):
-        """Handle deletion of a question"""
+        """Handles deletion of a question"""
         try:
             print(f'Request - [DELETE] /questions/{question_id}')
 
@@ -132,6 +133,7 @@ def create_app(test_config=None):
         except Exception as e:
             print(f'Error - [DELETE] /questions/{question_id} - {e}')
             code = getattr(e, 'code', 500)
+            db.session.rollback()
             abort(code)
         finally:
             db.session.close()
@@ -146,6 +148,41 @@ def create_app(test_config=None):
       the form will clear and the question will appear at the end of the last page
       of the questions list in the "List" tab.
     '''
+    @app.route('/questions', methods=['POST'])
+    def add_question():
+        """Handles addition of a new question"""
+        try:
+            print('Request - [POST] - /questions')
+            body = request.get_json()
+
+            question = body.get('question', None)
+            answer = body.get('answer', None)
+            difficulty = body.get('difficulty', None)
+            category = body.get('category', None)
+
+            if [x for x in [question, answer, difficulty, category] if not x] or not Category.query.get(category):
+                # invalid request with missing field(s)
+                abort(422)
+
+            new_question = Question(
+                question=question,
+                answer=answer,
+                difficulty=difficulty,
+                category=category
+            )
+
+            db.session.add(new_question)
+            db.session.commit()
+
+            return jsonify({
+                'success': True
+            }), 201
+        except Exception as e:
+            print(f'Error - [POST] /questions - {e}')
+            code = getattr(e, 'code', 500)
+            abort(code)
+        finally:
+            db.session.close()
 
     '''
       @TODO: 
@@ -225,7 +262,7 @@ def create_app(test_config=None):
             'success': False,
             'error': 422,
             'message': 'could not process the request'
-        }), 4222
+        }), 422
 
     @app.errorhandler(500)
     def internal_server_error(error):

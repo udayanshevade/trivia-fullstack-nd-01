@@ -118,6 +118,7 @@ DELETE ...
     - page: which identifies the start and end of the list of questions to return
     - current_category: which specifies how to filter down the questions by category
   - Returns: An object with a key, questions, containing questions, along with a count of all questions, a list of categories and the current category.
+- Sample: 'http://localhost:5000/questions?page=1&current_category=1'
 
 ```
 {
@@ -138,4 +139,29 @@ DELETE ...
   ],
   current_category: 1,
 }
+```
+
+#### Delete '/questions/<int:question_id>'
+
+- General
+  - Deletes a question
+  - Request Arguments:
+    - question_id: which identifies the specific question
+  - Returns: An object with a key, success, which is true
+  - Sample: 'http://localhost:5000/questions/delete'
+
+```
+{ success: true }
+```
+
+#### POST '/questions'
+
+- General
+  - Creates a new question with the passed in form json data
+  - Request Arguments: object containing question, answer, difficulty and category
+  - Returns: An object with a single key, success, signifying whether the question was saved
+- Sample: 'http://localhost:5000/categories'
+
+```
+{ success: true }
 ```

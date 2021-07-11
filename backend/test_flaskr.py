@@ -14,8 +14,8 @@ class TriviaTestCase(unittest.TestCase):
         """Define test variables and initialize app."""
         self.app = create_app()
         self.client = self.app.test_client
-        self.database_name = "trivia_test"
-        self.database_path = "postgresql://{}/{}".format(
+        self.database_name = 'trivia_test'
+        self.database_path = 'postgresql://{}/{}'.format(
             'localhost:5432', self.database_name)
         setup_db(self.app, self.database_path)
 
@@ -31,6 +31,10 @@ class TriviaTestCase(unittest.TestCase):
         db.session.close()
         pass
 
+    #  ------------------------------------------------------------------------
+    #  Categories
+    #  ------------------------------------------------------------------------
+
     def test_get_categories(self):
         """Tests getting the categories"""
         res = self.client().get('/categories')
@@ -43,6 +47,12 @@ class TriviaTestCase(unittest.TestCase):
         self.assertTrue(categories)
         # check a key/value pair to ensure integrity
         self.assertEqual(categories['1'], 'Science')
+
+    #  ------------------------------------------------------------------------
+    #  Questions
+    #  ------------------------------------------------------------------------
+
+    # Get paginated questions
 
     def test_get_paginated_questions(self):
         """Tests getting paginated questions with request param"""
@@ -86,6 +96,8 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(data['error'], 404)
         self.assertEqual(data['message'], 'not found')
 
+    #  Delete question
+
     def test_delete_question(self):
         """Tests deletion of a question"""
         # First insert a new question for the test and delete it
@@ -113,6 +125,49 @@ class TriviaTestCase(unittest.TestCase):
         data = json.loads(res.data)
         self.assertEqual(res.status_code, 404)
         self.assertEqual(data['success'], False)
+
+    #  Post question
+
+    def test_add_question(self):
+        """Tests addition of a new question"""
+        request_data = {
+            'question': 'How do magnets work?',
+            'answer': 'Magic',
+            'difficulty': 1,
+            'category': 1,
+        }
+        res = self.client().post('/questions', json=request_data)
+        data = json.loads(res.data)
+        self.assertEqual(res.status_code, 201)
+        self.assertEqual(data['success'], True)
+
+    def test_add_question_422_for_invalid_form_values(self):
+        """Tests addition of a new question with invalid form data"""
+        request_data = {
+            'question': 'How do magnets work?',
+            'answer': 'Magic',
+            'difficulty': None,
+            'category': 1,
+        }
+        res = self.client().post('/questions', json=request_data)
+        data = json.loads(res.data)
+        self.assertEqual(res.status_code, 422)
+        self.assertEqual(data['success'], False)
+        self.assertEqual(data['message'], 'could not process the request')
+
+    def test_add_question_422_for_invalid_category(self):
+        """Tests addition of a new question with an invalid category"""
+        request_data = {
+            'question': 'How do magnets work?',
+            'answer': 'Magic',
+            'difficulty': 1,
+            'category': 1000,
+        }
+        res = self.client().post('/questions', json=request_data)
+        data = json.loads(res.data)
+        self.assertEqual(res.status_code, 422)
+        self.assertEqual(data['success'], False)
+        self.assertEqual(data['message'], 'could not process the request')
 
 
 # Make the tests conveniently executable
