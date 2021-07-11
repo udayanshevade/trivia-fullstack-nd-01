@@ -95,7 +95,7 @@ DELETE ...
   - Fetches a dictionary of categories in which the keys are the ids and the value is the corresponding string of the category
   - Request Arguments: None
   - Returns: An object with a single key, categories, that contains a object of id: category_string key:value pairs.
-- Sample: 'http://localhost:5000/categories'
+- Sample: `curl http://localhost:5000/categories`
 
 ```
 {
@@ -119,7 +119,7 @@ DELETE ...
     - 'current_category': (optional) which specifies how to filter down the questions by category
     - 'search': (optional) which specifies a search term to match, case-insensitive
   - Returns: An object with a key, questions, containing questions, along with a count of all questions, a list of categories and the current category.
-- Sample: 'http://localhost:5000/questions?page=1&current_category=1&search=biography'
+- Sample: `curl http://localhost:5000/questions?page=1&current_category=4`
 
 ```
 {
@@ -141,7 +141,40 @@ DELETE ...
     '5' : "Entertainment",
     '6' : "Sports"
   },
-  current_category: 1,
+  current_category: 4,
+}
+```
+
+#### Post '/questions/search'
+
+- General
+  - Searches for matching questions using a query
+  - Request arguments:
+    - search - query to match
+  - Returns - list of questions that match the searched text
+- Sample: `curl http://localhost:5000/questions/search -X POST -H "Content-Type: application/json" - d '{ search: 'Caged Bird' }'`
+
+```
+{
+  questions: [
+    {
+      'id' : 5,
+      'question' : "Whose biography is entitled 'I Know Why the Caged Bird Sings'?",
+      'answer': "Maya Angelou",
+      'difficulty' : 2,
+      'category': 4,
+    }
+  ],
+  total_questions: 19,
+  categories: {
+    '1': "Science",
+    '2': 'Art',
+    '3': 'Geography,
+    '4': 'History',
+    '5' : "Entertainment",
+    '6' : "Sports"
+  },
+  current_category: None,
 }
 ```
 
@@ -152,20 +185,25 @@ DELETE ...
   - Request Arguments:
     - question_id: which identifies the specific question
   - Returns: An object with a key, success, which is true
-  - Sample: 'http://localhost:5000/questions/delete'
+  - Sample: `curl http://localhost:5000/questions/42 -X DELETE`
 
 ```
 { success: true }
 ```
 
-#### POST '/questions'
+#### Post '/questions'
 
 - General
   - Creates a new question with the passed in form json data
   - Request Arguments: object containing question, answer, difficulty and category
   - Returns: An object with a single key, success, signifying whether the question was saved
-- Sample: 'http://localhost:5000/categories'
+- Sample: `curl http://localhost:5000/categories -X POST -H "Content-Type: application/json" - d '{ question: 'foo?', answer: 'bar', difficulty: 10, category: 5 }'`
 
 ```
 { success: true }
 ```
+
+#### Get '/category/<int:category_id>/questions'
+
+- General
+  - Gets all questions associated with a particular category
