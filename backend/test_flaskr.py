@@ -92,7 +92,8 @@ class TriviaTestCase(unittest.TestCase):
         )
         db.session.add(new_question)
         db.session.commit()
-        res = self.client().get('/questions?search=WoOdcHuCk')  # case-insensitive
+        res = self.client().get(
+            '/questions?search=if a WoOdcHuCk could chuck wood')  # case-insensitive
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 200)

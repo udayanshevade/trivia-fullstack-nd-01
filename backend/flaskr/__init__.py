@@ -54,16 +54,6 @@ def create_app(test_config=None):
         finally:
             db.session.close()
 
-    def format_question(question):
-        """Picks the pertinent fields from the raw Question query object"""
-        return {
-            'id': question.id,
-            'question': question.question,
-            'answer': question.answer,
-            'difficulty': question.difficulty,
-            'category': question.category,
-        }
-
     QUESTIONS_PER_PAGE = 10
 
     #  ------------------------------------------------------------------------
@@ -117,8 +107,8 @@ def create_app(test_config=None):
                 )
             questions_query = questions_query.limit(
                 QUESTIONS_PER_PAGE).offset(offset)
-            questions_data = [format_question(
-                question) for question in questions_query.all()]
+            questions_data = [
+                question.format() for question in questions_query.all()]
 
             categories_data = {
                 category.id: category.type for category in Category.query.all()}
@@ -137,7 +127,7 @@ def create_app(test_config=None):
         finally:
             db.session.close()
 
-    # Delete post
+    # Delete question
 
     @app.route('/questions/<int:question_id>', methods=['DELETE'])
     def delete_question(question_id):
@@ -164,7 +154,7 @@ def create_app(test_config=None):
         finally:
             db.session.close()
 
-    # Create post
+    # Create question
 
     @app.route('/questions', methods=['POST'])
     def add_question():
@@ -210,13 +200,11 @@ def create_app(test_config=None):
             db.session.close()
 
     '''
-      @TODO: 
-      Create a GET endpoint to get questions based on category.
-
-      TEST: In the "List" tab / main screen, clicking on one of the
-      categories in the left column will cause only questions of that
-      category to be shown.
+      Handles explicitly fetching questions by a specified category
     '''
+    @app.route('/categories/<int:category_id>/questions', methods=['GET'])
+    def get_category_questions(category_id):
+        print(f'Request - [GET] /categories/{category_id}/questions')
 
     '''
       @TODO: 
