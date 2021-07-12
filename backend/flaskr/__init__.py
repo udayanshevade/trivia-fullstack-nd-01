@@ -64,10 +64,10 @@ def create_app(test_config=None):
     @app.route('/questions', methods=['GET'])
     def get_paginated_questions():
         """
-          Handles getting paginated responses with optional query and pagination params
+          Handles getting paginated questions with pagination param
           Request params:
             - page: default of 1, filter by which batch of questions
-            - current_category: (optional) filter questions down by a specified category
+            - current_category: (optional) filter by specified category
         """
         try:
             print('Request - [GET] /questions')
@@ -101,7 +101,8 @@ def create_app(test_config=None):
                 question.format() for question in questions_query.all()]
 
             categories_data = {
-                category.id: category.type for category in Category.query.all()}
+                category.id: category.type for category
+                in Category.query.all()}
 
             return jsonify({
                 'success': True,
@@ -140,7 +141,9 @@ def create_app(test_config=None):
 
             return jsonify({
                 'success': True,
-                'questions': [question.format() for question in questions_query.all()],
+                'questions': [
+                    question.format() for question in questions_query.all()
+                ],
                 'total_questions': questions_total_count,
                 'current_category': None,
             }), 200
@@ -277,7 +280,7 @@ def create_app(test_config=None):
         """
           Handles fetching a new question based on prior questions
           Request body:
-            - previous_questions - lists which question ids have already been covered
+            - previous_questions - already covered question ids
             - quiz_category - (optional) { id, type } for category to filter
         """
         try:
@@ -302,9 +305,8 @@ def create_app(test_config=None):
                     if coerced_int_id > 0:
                         quiz_category_id = coerced_int_id
                 except BaseException:
-                    print(
-                        f'Unprocessable quiz_category value {jsonify(quiz_category)}')
                     # reject if the value is unprocessable
+                    print(f'Unprocessable quiz_category {quiz_category}')
                     abort(422)
 
             # error out if invalid category
@@ -325,8 +327,10 @@ def create_app(test_config=None):
             remaining_questions = remaining_questions_query.all()
             remaining_questions_len = len(remaining_questions)
             # format the question if not None
-            question = None if not remaining_questions_len else remaining_questions[random.randint(
-                0, remaining_questions_len - 1)].format()
+            question = None
+            if remaining_questions_len:
+                question = remaining_questions[
+                    random.randint(0, remaining_questions_len - 1)].format()
 
             return jsonify({
                 'success': True,
