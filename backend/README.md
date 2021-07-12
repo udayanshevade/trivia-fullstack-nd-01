@@ -67,16 +67,15 @@ python test_flaskr.py
 
 ## API Reference
 
-### Getting
+### Endpoints
 
-Endpoints
-GET '/categories'
-GET '/questions'
-POST '/questions/search'
-DELETE '/questions/<int:question_id>'
-POST '/questions'
-GET '/category/<int:category_id>/questions'
-POST '/quizzes'
+- [GET '/categories'](#get-categories)
+- [GET '/questions'](#get-questions)
+- [POST '/questions/search'](#post-questionssearch)
+- [DELETE '/questions/<int:question_id>'](#delete-questionsintquestion_id)
+- [POST '/questions'](#post-questions)
+- [GET '/category/<int:category_id>/questions'](#get-categoryintcategory_idquestions)
+- [POST '/quizzes'](#post-quizzes)
 
 #### GET '/categories'
 
