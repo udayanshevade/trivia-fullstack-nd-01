@@ -81,8 +81,8 @@ class TriviaTestCase(unittest.TestCase):
     # def test_get_paginated_questions_for_category(self):
         # """Tests getting paginated questions with 'current_category' param"""
 
-    def test_get_paginated_questions_for_search(self):
-        """Tests getting paginated questions with 'search' param"""
+    def test_search_questions(self):
+        """Tests getting questions with a 'search' json"""
         # enter new data that is unique
         new_question = Question(
             question='How much wood could a woodchuck chuck if a woodchuck could chuck wood?',
@@ -92,8 +92,8 @@ class TriviaTestCase(unittest.TestCase):
         )
         db.session.add(new_question)
         db.session.commit()
-        res = self.client().get(
-            '/questions?search=if a WoOdcHuCk could chuck wood')  # case-insensitive
+        request_data = {'search': 'if a WoOdcHuCk could chuck wood'}
+        res = self.client().post('/questions/search', json=request_data)  # case-insensitive
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 200)

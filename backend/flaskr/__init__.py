@@ -69,7 +69,6 @@ def create_app(test_config=None):
           Request params:
             - page: default of 1, filter by which batch of questions
             - current_category: (optional) filter questions down by a specified category
-            - search: (optional) filter down by a term to match in the question
         """
         try:
             print('Request - [GET] /questions')
@@ -93,18 +92,11 @@ def create_app(test_config=None):
             if current_category and not Category.query.get(current_category):
                 abort(404)
 
-            search = request.args.get('search', '', type=str)
-
             questions_query = Question.query
             # apply an optional category filter before pagination
             if current_category:
                 questions_query = questions_query.filter(
                     Question.category == current_category)
-            if search:
-                questions_query = questions_query.filter(
-                    Question.question.ilike(
-                        f'%{search}%')
-                )
             questions_query = questions_query.limit(
                 QUESTIONS_PER_PAGE).offset(offset)
             questions_data = [
@@ -122,6 +114,37 @@ def create_app(test_config=None):
             }), 200
         except Exception as e:
             print(f'Error - [GET] /questions - {e}')
+            code = getattr(e, 'code', 500)
+            abort(code)
+        finally:
+            db.session.close()
+
+    # Search question
+    @app.route('/questions/search', methods=['POST'])
+    def search_questions():
+        """
+          Handles searching a query to pick specific questions
+          Request body:
+            - search - actual text query to filter questions
+        """
+        try:
+            print('Request - [POST] /questions/search')
+            body = request.get_json()
+            search = body.get('search', '')
+
+            questions_query = Question.query
+            if search:
+                questions_query = questions_query.filter(
+                    Question.question.ilike(
+                        f'%{search}%')
+                )
+
+            return jsonify({
+                'success': True,
+                'questions': [question.format() for question in questions_query.all()]
+            }), 200
+        except Exception as e:
+            print(f'Error - [POST] /questions/search - {e}')
             code = getattr(e, 'code', 500)
             abort(code)
         finally:
@@ -199,11 +222,11 @@ def create_app(test_config=None):
         finally:
             db.session.close()
 
-    '''
-      Handles explicitly fetching questions by a specified category
-    '''
     @app.route('/categories/<int:category_id>/questions', methods=['GET'])
     def get_category_questions(category_id):
+        '''
+          Handles explicitly fetching questions by a specified category
+        '''
         print(f'Request - [GET] /categories/{category_id}/questions')
 
     '''
