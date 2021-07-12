@@ -105,7 +105,8 @@ DELETE ...
     '3' : "Geography",
     '4' : "History",
     '5' : "Entertainment",
-    '6' : "Sports"
+    '6' : "Sports",
+    ...
   }
 }
 ```
@@ -115,9 +116,8 @@ DELETE ...
 - General
   - Fetches a paginated list of questions, answers, their difficulty levels and categories.
   - Request Arguments:
-    - 'page': which identifies the start and end of the list of questions to return
-    - 'current_category': (optional) which specifies how to filter down the questions by category
-    - 'search': (optional) which specifies a search term to match, case-insensitive
+    - 'page': query param identifying the start and end of the list of questions to return
+    - 'current_category': (optional) query param identifying how to filter down the questions by category
   - Returns: An object with a key, questions, containing questions, along with a count of all questions, a list of categories and the current category.
 - Sample: `curl http://localhost:5000/questions?page=1&current_category=4`
 
@@ -130,7 +130,8 @@ DELETE ...
       'answer': "Maya Angelou",
       'difficulty' : 2,
       'category': 4,
-    }
+    },
+    ...
   ],
   total_questions: 19,
   categories: {
@@ -139,7 +140,8 @@ DELETE ...
     '3': 'Geography,
     '4': 'History',
     '5' : "Entertainment",
-    '6' : "Sports"
+    '6' : "Sports",
+    ...
   },
   current_category: 4,
 }
@@ -150,9 +152,9 @@ DELETE ...
 - General
   - Searches for matching questions using a query
   - Request arguments:
-    - search - query to match
+    - body - with a single key, search, that contains string query to match, case-insensitive
   - Returns - list of questions that match the searched text
-- Sample: `curl http://localhost:5000/questions/search -X POST -H "Content-Type: application/json" - d '{ search: 'Caged Bird' }'`
+- Sample: `curl http://localhost:5000/questions/search -X POST -H "Content-Type: application/json" - d '{ search: 'caged bird' }'`
 
 ```
 {
@@ -172,9 +174,10 @@ DELETE ...
     '3': 'Geography,
     '4': 'History',
     '5' : "Entertainment",
-    '6' : "Sports"
+    '6' : "Sports",
+    ...
   },
-  current_category: None,
+  current_category: null,
 }
 ```
 
@@ -183,7 +186,7 @@ DELETE ...
 - General
   - Deletes a question
   - Request Arguments:
-    - question_id: which identifies the specific question
+    - question_id: variable which identifies the specific question
   - Returns: An object with a key, success, which is true
   - Sample: `curl http://localhost:5000/questions/42 -X DELETE`
 
@@ -195,7 +198,8 @@ DELETE ...
 
 - General
   - Creates a new question with the passed in form json data
-  - Request Arguments: object containing question, answer, difficulty and category
+  - Request Arguments:
+    - body: an object containing question, answer, difficulty and category
   - Returns: An object with a single key, success, signifying whether the question was saved
 - Sample: `curl http://localhost:5000/categories -X POST -H "Content-Type: application/json" - d '{ question: 'foo?', answer: 'bar', difficulty: 10, category: 5 }'`
 
@@ -207,3 +211,23 @@ DELETE ...
 
 - General
   - Gets all questions associated with a particular category
+  - Request Arguments:
+    - category_id: variable which identifies the category to filter the questions
+- Sample: `curl http://localhost:5000/categories/4/questions`
+
+```
+{
+  questions: [
+    {
+      'id' : 5,
+      'question' : "Whose biography is entitled 'I Know Why the Caged Bird Sings'?",
+      'answer': "Maya Angelou",
+      'difficulty' : 2,
+      'category': 4,
+    },
+    ...
+  ],
+  total_questions: 19,
+  current_category: null,
+}
+```

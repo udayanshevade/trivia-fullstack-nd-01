@@ -132,6 +132,9 @@ def create_app(test_config=None):
             body = request.get_json()
             search = body.get('search', '')
 
+            questions_total_count = db.session.query(
+                func.count(Question.id)).first()[0]
+
             questions_query = Question.query
             if search:
                 questions_query = questions_query.filter(
@@ -141,7 +144,9 @@ def create_app(test_config=None):
 
             return jsonify({
                 'success': True,
-                'questions': [question.format() for question in questions_query.all()]
+                'questions': [question.format() for question in questions_query.all()],
+                'total_questions': questions_total_count,
+                'current_category': None,
             }), 200
         except Exception as e:
             print(f'Error - [POST] /questions/search - {e}')
@@ -226,8 +231,37 @@ def create_app(test_config=None):
     def get_category_questions(category_id):
         '''
           Handles explicitly fetching questions by a specified category
+          Request arguments:
+            - category_id - variable specifying the category to get
         '''
-        print(f'Request - [GET] /categories/{category_id}/questions')
+        try:
+            print(f'Request - [GET] /categories/{category_id}/questions')
+            category = Category.query.get(category_id)
+
+            # throw early if category is non-existent
+            if not category:
+                abort(404)
+
+            questions_total_count = db.session.query(
+                func.count(Question.id)).first()[0]
+
+            questions_query = Question.query.filter(
+                Question.category == category_id)
+            questions = [question.format()
+                         for question in questions_query.all()]
+            return jsonify({
+                'success': True,
+                'questions': questions,
+                'total_questions': questions_total_count,
+                'current_category': None,
+            })
+
+        except Exception as e:
+            print(f'Error - [GET] /categories/{category_id}/questions - {e}')
+            code = getattr(e, 'code', 500)
+            abort(code)
+        finally:
+            db.session.close()
 
     '''
       @TODO: 

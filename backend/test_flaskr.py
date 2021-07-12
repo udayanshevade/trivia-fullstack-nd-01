@@ -78,8 +78,25 @@ class TriviaTestCase(unittest.TestCase):
         # None, but the key should still exist
         self.assertIn('current_category', data)
 
-    # def test_get_paginated_questions_for_category(self):
-        # """Tests getting paginated questions with 'current_category' param"""
+    def test_get_paginated_questions_with_404_for_out_of_range_page(self):
+        """Returns 404 error for an out-of-range page"""
+        res = self.client().get('/questions?page=1000')
+        data = json.loads(res.data)
+        self.assertEqual(res.status_code, 404)
+        self.assertEqual(data['success'], False)
+        self.assertEqual(data['error'], 404)
+        self.assertEqual(data['message'], 'not found')
+
+    def test_get_paginated_questions_with_404_for_invalid_category(self):
+        """Returns 404 error for an invalid category"""
+        res = self.client().get('/questions?current_category=1000')
+        data = json.loads(res.data)
+        self.assertEqual(res.status_code, 404)
+        self.assertEqual(data['success'], False)
+        self.assertEqual(data['error'], 404)
+        self.assertEqual(data['message'], 'not found')
+
+    # Search questions
 
     def test_search_questions(self):
         """Tests getting questions with a 'search' json"""
@@ -105,24 +122,6 @@ class TriviaTestCase(unittest.TestCase):
         self.assertTrue(type(questions) == list and len(questions) == 1)
 
         Question.query.get(new_question.id).delete()  # test-specific tear down
-
-    def test_get_paginated_questions_with_404_for_out_of_range_page(self):
-        """Returns 404 error for an out-of-range page"""
-        res = self.client().get('/questions?page=1000')
-        data = json.loads(res.data)
-        self.assertEqual(res.status_code, 404)
-        self.assertEqual(data['success'], False)
-        self.assertEqual(data['error'], 404)
-        self.assertEqual(data['message'], 'not found')
-
-    def test_get_paginated_questions_with_404_for_invalid_category(self):
-        """Returns 404 error for an out-of-range page"""
-        res = self.client().get('/questions?current_category=1000')
-        data = json.loads(res.data)
-        self.assertEqual(res.status_code, 404)
-        self.assertEqual(data['success'], False)
-        self.assertEqual(data['error'], 404)
-        self.assertEqual(data['message'], 'not found')
 
     #  Delete question
 
@@ -196,6 +195,35 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 422)
         self.assertEqual(data['success'], False)
         self.assertEqual(data['message'], 'could not process the request')
+
+    # Get all questions by category
+
+    def test_get_questions_by_category(self):
+        """Tests getting all questions for a category"""
+        res = self.client().get('/categories/1/questions')
+        data = json.loads(res.data)
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data['success'], True)
+
+        # populated array
+        questions = data['questions']
+        self.assertTrue(type(questions) == list and len(questions))
+
+        # non-zero int
+        total_questions = data['total_questions']
+        self.assertTrue(type(total_questions) == int and total_questions)
+
+        # None, but the key should still exist
+        self.assertIn('current_category', data)
+
+    def test_get_questions_with_404_for_invalid_category(self):
+        """Returns 404 error for an invalid category"""
+        res = self.client().get('/category/1000/questions')
+        data = json.loads(res.data)
+        self.assertEqual(res.status_code, 404)
+        self.assertEqual(data['success'], False)
+        self.assertEqual(data['error'], 404)
+        self.assertEqual(data['message'], 'not found')
 
 
 # Make the tests conveniently executable
