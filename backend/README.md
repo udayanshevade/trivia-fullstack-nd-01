@@ -105,8 +105,7 @@ DELETE ...
     '3' : "Geography",
     '4' : "History",
     '5' : "Entertainment",
-    '6' : "Sports",
-    ...
+    '6' : "Sports"
   }
 }
 ```
@@ -140,8 +139,7 @@ DELETE ...
     '3': 'Geography,
     '4': 'History',
     '5' : "Entertainment",
-    '6' : "Sports",
-    ...
+    '6' : "Sports"
   },
   current_category: 4,
 }
@@ -174,8 +172,7 @@ DELETE ...
     '3': 'Geography,
     '4': 'History',
     '5' : "Entertainment",
-    '6' : "Sports",
-    ...
+    '6' : "Sports"
   },
   current_category: null,
 }
@@ -229,5 +226,26 @@ DELETE ...
   ],
   total_questions: 19,
   current_category: null,
+}
+```
+
+#### Post '/quizzes'
+
+- General
+  - Accepts a list of questions and a category, and returns a fresh question
+  - Request Arguments:
+    - previous_questions - list of old questions
+    - quiz_category - (optional) filter while selecting a new question
+- Sample: `curl http://localhost:5000/quizzes -X POST -H "Content-Type: application/json" - d '{ previous_questions: [6, 4], quiz_category: 5 }'`
+
+```
+{
+  question: {
+    'id' : 5,
+    'question' : "What movie earned Tom Hanks his third straight Oscar nomination, in 1996?",
+    'answer': "Apollo 13",
+    'difficulty' : 4,
+    'category': 5,
+  }
 }
 ```
