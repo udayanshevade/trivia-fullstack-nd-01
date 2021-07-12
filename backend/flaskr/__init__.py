@@ -4,7 +4,6 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import func
 from flask_cors import CORS
 import random
-
 from models import db, setup_db, Question, Category
 
 QUESTIONS_PER_PAGE = 10
