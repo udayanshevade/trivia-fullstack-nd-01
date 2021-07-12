@@ -21,8 +21,8 @@ def create_app(test_config=None):
         response.headers.add('Access-Control-Allow-Origin', '*')
         response.headers.add('Access-Control-Allow-Headers',
                              'Content-Type,Authorization,true')
-        response.headers.add(
-            'Access-Control-Allow-Methods', ['GET', 'POST', 'DELETE', 'OPTIONS'])
+        response.headers.add('Access-Control-Allow-Methods',
+                             ['GET', 'POST', 'DELETE', 'OPTIONS'])
 
         return response
 
@@ -199,7 +199,8 @@ def create_app(test_config=None):
             difficulty = body.get('difficulty', None)
             category = body.get('category', None)
 
-            if [x for x in [question, answer, difficulty, category] if not x] or not Category.query.get(category):
+            if [x for x in [question, answer, difficulty, category]
+                    if not x] or not Category.query.get(category):
                 # invalid request with missing field(s)
                 abort(422)
 
@@ -286,7 +287,7 @@ def create_app(test_config=None):
             quiz_category = body.get('quiz_category', None)
 
             # if quiz_category isn't the expected format
-            if quiz_category and not 'id' in quiz_category:
+            if quiz_category and 'id' not in quiz_category:
                 abort(422)
 
             # category filter value is shorthanded to None by default
@@ -296,10 +297,11 @@ def create_app(test_config=None):
                     coerced_int_id = int(quiz_category['id'])
                     if coerced_int_id < 0:
                         raise Exception('unprocessable value')
-                    # client sends 0 to indicate None, so no category is selected
+                    # client sends 0 to indicate None, so no category is
+                    # selected
                     if coerced_int_id > 0:
                         quiz_category_id = coerced_int_id
-                except:
+                except BaseException:
                     print(
                         f'Unprocessable quiz_category value {jsonify(quiz_category)}')
                     # reject if the value is unprocessable
