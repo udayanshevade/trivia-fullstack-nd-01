@@ -85,9 +85,12 @@ python test_flaskr.py
 
 Endpoints
 GET '/categories'
-GET ...
-POST ...
-DELETE ...
+GET '/questions'
+POST '/questions/search'
+DELETE '/questions/<int:question_id>'
+POST '/questions'
+GET '/category/<int:category_id>/questions'
+POST '/quizzes'
 
 #### GET '/categories'
 
