@@ -227,6 +227,8 @@ def create_app(test_config=None):
         finally:
             db.session.close()
 
+    # Get all questions for a specific category
+
     @app.route('/categories/<int:category_id>/questions', methods=['GET'])
     def get_category_questions(category_id):
         '''
@@ -254,7 +256,7 @@ def create_app(test_config=None):
                 'questions': questions,
                 'total_questions': questions_total_count,
                 'current_category': None,
-            })
+            }), 200
 
         except Exception as e:
             print(f'Error - [GET] /categories/{category_id}/questions - {e}')
@@ -263,17 +265,73 @@ def create_app(test_config=None):
         finally:
             db.session.close()
 
-    '''
-      @TODO: 
-      Create a POST endpoint to get questions to play the quiz.
-      This endpoint should take category and previous question parameters
-      and return a random questions within the given category,
-      if provided, and that is not one of the previous questions.
+    # Get a fresh quiz question
 
-      TEST: In the "Play" tab, after a user selects "All" or a category,
-      one question at a time is displayed, the user is allowed to answer
-      and shown whether they were correct or not.
-    '''
+    @app.route('/quizzes', methods=['POST'])
+    def get_quiz_question():
+        """
+          Handles fetching a new question based on prior questions
+          Request body:
+            - previous_questions - lists which question ids have already been covered
+            - quiz_category - (optional) { id, type } for category to filter
+        """
+        try:
+            print('Request - [POST] /quizzes')
+            body = request.get_json()
+            previous_questions_ids = body.get('previous_questions', [])
+            quiz_category = body.get('quiz_category', None)
+
+            # if quiz_category isn't the expected format
+            if quiz_category and not 'id' in quiz_category:
+                abort(422)
+
+            # category filter value is shorthanded to None by default
+            quiz_category_id = None
+            if quiz_category:
+                try:
+                    coerced_int_id = int(quiz_category['id'])
+                    if coerced_int_id < 0:
+                        raise Exception('unprocessable value')
+                    # client sends 0 to indicate None, so no category is selected
+                    if coerced_int_id > 0:
+                        quiz_category_id = coerced_int_id
+                except:
+                    print(
+                        f'Unprocessable quiz_category value {jsonify(quiz_category)}')
+                    # reject if the value is unprocessable
+                    abort(422)
+
+            # error out if invalid category
+            if quiz_category_id and not Category.query.get(quiz_category_id):
+                abort(404)
+
+            remaining_questions_query = Question.query
+            # filter by:
+            # quiz category if specified
+            if quiz_category_id:
+                remaining_questions_query = remaining_questions_query.filter(
+                    Question.category == quiz_category_id)
+            # omitting any questions that have already been covered
+            if previous_questions_ids:
+                remaining_questions_query = remaining_questions_query.filter(
+                    Question.id.notin_(previous_questions_ids))
+
+            remaining_questions = remaining_questions_query.all()
+            remaining_questions_len = len(remaining_questions)
+            # format the question if not None
+            question = None if not remaining_questions_len else remaining_questions[random.randint(
+                0, remaining_questions_len - 1)].format()
+
+            return jsonify({
+                'success': True,
+                'question': question
+            }), 200
+        except Exception as e:
+            print(f'Error - [POST] /quizzes - {e}')
+            code = getattr(e, 'code', 500)
+            abort(code)
+        finally:
+            db.session.close()
 
     #  Error handlers
     #  ------------------------------------------------------------------------
@@ -330,6 +388,6 @@ def create_app(test_config=None):
             'success': False,
             'error': 500,
             'message': 'internal server error'
-        })
+        }), 500
 
     return app

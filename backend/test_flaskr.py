@@ -225,6 +225,61 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(data['error'], 404)
         self.assertEqual(data['message'], 'not found')
 
+    # Quiz questions
+
+    def test_get_quiz_question(self):
+        """Tests getting a new random quiz question"""
+        request_data = {
+            'previous_questions': [],
+            'quiz_category': {'id': 0, 'type': None}  # all
+        }
+        res = self.client().post('/quizzes', json=request_data)
+        data = json.loads(res.data)
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data['success'], True)
+        question = data['question']
+        self.assertTrue(question)
+        self.assertIn('id', question)
+
+    def test_get_quiz_question_for_category(self):
+        """Tests getting a new random quiz question with a specified category"""
+        request_data = {
+            'previous_questions': [4, 6],
+            'quiz_category': {'id': 5, 'type': 'Entertainment'}
+        }
+        res = self.client().post('/quizzes', json=request_data)
+        data = json.loads(res.data)
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data['success'], True)
+        question = data['question']
+        self.assertTrue(question)
+        # check if the movie in the sample data is right
+        # {'answer': 'Apollo 13', 'category': 5, 'difficulty': 4, 'id': 2, 'question': 'What movie earned Tom Hanks his third straight Oscar nomination, in 1996?'}
+        self.assertEqual(question['id'], 2)
+
+    def test_get_quiz_question_with_404_for_invalid_category(self):
+        """Tests getting a new random quiz question with an invalid category"""
+        request_data = {
+            'previous_questions': [4, 6],
+            'quiz_category': {'id': 1000, 'type': 'Foo'}
+        }
+        res = self.client().post('/quizzes', json=request_data)
+        data = json.loads(res.data)
+        self.assertEqual(res.status_code, 404)
+        self.assertEqual(data['success'], False)
+
+    def test_get_nothing_for_invalid_category(self):
+        """Tests getting no new questions if we are all out"""
+        request_data = {
+            'previous_questions': [2, 4, 6],
+            'quiz_category': {'id': 5, 'type': 'Entertainment'}
+        }
+        res = self.client().post('/quizzes', json=request_data)
+        data = json.loads(res.data)
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data['success'], True)
+        self.assertEqual(data['question'], None)
+
 
 # Make the tests conveniently executable
 if __name__ == "__main__":
