@@ -73,17 +73,6 @@ def create_app(test_config=None):
         try:
             print('Request - [GET] /questions')
 
-            page = request.args.get('page', 1, type=int)
-
-            # calculate offset, if page is specified, defaults to 0
-            offset = (page - 1) * QUESTIONS_PER_PAGE
-
-            questions_total_count = db.session.query(
-                func.count(Question.id)).first()[0]
-            # FIRST eliminate an out-of-range query
-            if offset >= questions_total_count:
-                abort(404)
-
             # default current category to None, returned in response as is
             current_category = request.args.get(
                 'current_category', None, type=int)
@@ -97,6 +86,16 @@ def create_app(test_config=None):
             if current_category:
                 questions_query = questions_query.filter(
                     Question.category == current_category)
+
+            # BEFORE pagination get total count of current query results
+            questions_total_count = questions_query.count()
+            # calculate offset, if page is specified, defaults to 0
+            page = request.args.get('page', 1, type=int)
+            offset = (page - 1) * QUESTIONS_PER_PAGE
+            # and eliminate an out-of-range query
+            if offset >= questions_total_count:
+                abort(404)
+
             questions_query = questions_query.limit(
                 QUESTIONS_PER_PAGE).offset(offset)
             questions_data = [
@@ -132,15 +131,13 @@ def create_app(test_config=None):
             body = request.get_json()
             search = body.get('search', '')
 
-            questions_total_count = db.session.query(
-                func.count(Question.id)).first()[0]
-
             questions_query = Question.query
             if search:
                 questions_query = questions_query.filter(
                     Question.question.ilike(
                         f'%{search}%')
                 )
+            questions_total_count = questions_query.count()
 
             return jsonify({
                 'success': True,
@@ -176,8 +173,8 @@ def create_app(test_config=None):
             }), 200
         except Exception as e:
             print(f'Error - [DELETE] /questions/{question_id} - {e}')
-            code = getattr(e, 'code', 500)
             db.session.rollback()
+            code = getattr(e, 'code', 500)
             abort(code)
         finally:
             db.session.close()
@@ -218,10 +215,18 @@ def create_app(test_config=None):
             db.session.commit()
 
             return jsonify({
-                'success': True
+                'success': True,
+                'question': {
+                    'id': new_question.id,
+                    'question': new_question.question,
+                    'answer': new_question.answer,
+                    'difficulty': new_question.difficulty,
+                    'category': new_question.category,
+                }
             }), 201
         except Exception as e:
             print(f'Error - [POST] /questions - {e}')
+            db.session.rollback()
             code = getattr(e, 'code', 500)
             abort(code)
         finally:
@@ -244,11 +249,11 @@ def create_app(test_config=None):
             if not category:
                 abort(404)
 
-            questions_total_count = db.session.query(
-                func.count(Question.id)).first()[0]
-
             questions_query = Question.query.filter(
                 Question.category == category_id)
+
+            questions_total_count = questions_query.count()
+
             questions = [question.format()
                          for question in questions_query.all()]
             return jsonify({

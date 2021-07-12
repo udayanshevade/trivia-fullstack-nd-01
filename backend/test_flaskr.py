@@ -68,7 +68,10 @@ class TriviaTestCase(unittest.TestCase):
 
         # non-zero int
         total_questions = data['total_questions']
-        self.assertTrue(type(total_questions) == int and total_questions)
+        print('total_questions', total_questions)
+        # expect the total questions to be the same for paginated results without any other filters
+        self.assertTrue(type(total_questions) ==
+                        int and total_questions == Question.query.count())
 
         # populated array
         categories = data['categories']
@@ -167,6 +170,11 @@ class TriviaTestCase(unittest.TestCase):
         data = json.loads(res.data)
         self.assertEqual(res.status_code, 201)
         self.assertEqual(data['success'], True)
+        new_question = data['question']
+        self.assertTrue(new_question)
+
+        # test-specific teardown
+        Question.query.get(new_question['id']).delete()
 
     def test_add_question_422_for_invalid_form_values(self):
         """Tests addition of a new question with invalid form data"""
@@ -211,7 +219,8 @@ class TriviaTestCase(unittest.TestCase):
 
         # non-zero int
         total_questions = data['total_questions']
-        self.assertTrue(type(total_questions) == int and total_questions)
+        self.assertTrue(type(total_questions) ==
+                        int and total_questions < Question.query.count())
 
         # None, but the key should still exist
         self.assertIn('current_category', data)
